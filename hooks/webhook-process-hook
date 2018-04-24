@@ -8,7 +8,7 @@ import requests
 import json
 
 # Config file path
-config_path = os.path.expanduser('~/.gerrit-webhook')
+config_path = os.path.expanduser( '/var/gerrit/review_site/hooks/.gerrit-webhook')
 
 config = ConfigParser.RawConfigParser()
 config.read(config_path)
@@ -16,17 +16,17 @@ config.read(config_path)
 url = config.get('webhook', 'url')
 
 def show_usage():
-    print '\nNormal webhook usage: ' + sys.argv[0] + ' --action [new|merged|abandoned] --change <change id> --commit <git hash> --change-url <url to change>'
+    print '\nNormal webhook usage: ' + sys.argv[0] + ' --action [new|merged|abandoned|add] --change <change id> --commit <git hash> --change-url <url to change>'
 
-def fire_webhook(action, id, commit, commitUrl, who, branch, project):
+def fire_webhook(action,commitUrl, branch, project, changeOwner, submitter, reviewer):
     payload = {
         'action': action,
-        'id': id,
-        'commit': commit,
         'url': commitUrl,
-        'user': who,
         'branch': branch,
-        'project': project
+        'project': project,
+        'change-owner': changeOwner,
+        'submitter': submitter,
+        'reviewer': reviewer
     }
     headers = {'content-type': 'application/json'}
     requests.post(url, data=json.dumps(payload), headers=headers)
@@ -36,24 +36,32 @@ def main():
         show_usage()
         exit()
 
-    need = ['action=', 'change=', 'change-url=', 'commit=', 'project=', 'branch=', 'uploader=',
-            'patchset=', 'abandoner=', 'reason=', 'submitter=', 'is-draft=', 'change-owner=', 'author=', 'comment=', 'newrev=', 'kind=', 'Code-Review=']
+    need = ['topic=','action=', 'change=', 'change-url=', 'commit=', 'project=', 'branch=', 'uploader=',
+            'patchset=', 'abandoner=', 'reason=', 'submitter=', 'is-draft=', 'change-owner=', 'author=', 'comment=', 'newrev=', 'kind=', 'Code-Review=', 'reviewer=']
     optlist, args = getopt.getopt(sys.argv[1:], '', need)
-    id = action = commitUrl = who = commit = branch = project = ''
+    id = action = commitUrl = who = commit = branch = project = topic = changeOwner = reviewer = submitter = ''
 
     for o, a in optlist:
+        #print '\n' + o + ':' + a
         if o == '--change': id = a
         elif o == '--change-url': commitUrl = a
         elif o == '--commit': commit = a
         elif o == '--action': action = a
         elif o == '--uploader': who = a
-        elif o == '--submitter': who = a
+        elif o == '--submitter': submitter = a
         elif o == '--abandoner': who = a
         elif o == '--branch': branch = a
         elif o == '--project': project = a
+        elif o == '--topic': topic = a
+        elif o == '--change-owner': changeOwner = a
+        elif o == '--reviewer' : reviewer = a
 
-    if (len(commit) > 0 and len(id) > 0):
-        fire_webhook(action, id, commit, commitUrl, who, branch, project)
+    if (len(id) > 0):
+	print '\nFire_webhook ' + 'action:' + action + '\n    commitUrl:' + commitUrl + '\n    change-owner:' \
+		+ changeOwner + '\n    branch:' + branch + '\n    project:' + project + '\n    reviewer:' \
+		+ reviewer + '\n    submitter:' + submitter
+	if (action == 'add' or action == 'merged'):
+                fire_webhook(action, commitUrl, branch, project, changeOwner, submitter, reviewer)
     else:
         show_usage()
         
