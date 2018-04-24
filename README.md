@@ -9,7 +9,7 @@ Overview
 Set of gerrit hooks that will fire webhooks to your URLs. Inspired by jerrit.
 
 More info on hooks at:
-http://gerrit.googlecode.com/svn/documentation/2.1.6/config-hooks.html
+https://gerrit.googlesource.com/plugins/hooks/+/HEAD/src/main/resources/Documentation/config.md
 
 Requirements
 ------------
